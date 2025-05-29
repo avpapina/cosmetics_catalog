@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ .Name }}</title>
+
+</head>
+<body>
+    <div class="category-container">
+        <h1>{{ .Name }}</h1>
+        {{ if eq .Slug "sales" }}
+            <!-- Режим отображения продуктов для акций -->
+            <div class="product-list">
+                {{ range .Children }}
+                <a href="/catalog/{{ $.Slug }}" class="subcategory-link">
+                    <div class="subcategory-card">
+                        <h2>{{ .Name }}</h2>
+                    </div>
+                </a>
+            {{ end }}
+            </div>
+        {{ else }}
+            <!-- Стандартный режим отображения подкатегорий -->
+            <div class="subcategory-list">
+            {{ range .Children }}
+            <a href="/catalog/{{ $.Slug }}/{{ .Slug }}" class="subcategory-link">
+                <div class="subcategory-card">
+                    <h2>{{ .Name }}</h2>
+                </div>
+            </a>
+            {{ end }}
+        </div>
+
+        {{ end }}
+    </div>
+</body>
+</html>
