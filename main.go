@@ -76,7 +76,7 @@ func handleMainPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Страница подкатегории с продуктами
+// Страница подкатегории макияж уход
 func handleCatalogSubcategory(w http.ResponseWriter, r *http.Request, slug string) {
 	var current models.Category
 
@@ -112,57 +112,77 @@ func handleCatalogSubcategory(w http.ResponseWriter, r *http.Request, slug strin
 	}
 }
 
-// Страница всех продуктов категории (без подкатегории)
-func handleCategoryProducts(w http.ResponseWriter, r *http.Request, category, subcategory string) {
+// Страница всех продуктов подкатегории
+func handleCategoryProducts(w http.ResponseWriter, r *http.Request, categorySlug, subcategorySlug string) {
+	// Получаем подкатегорию с продуктами
+	var subcat models.Subcategory
+	if err := database.DB.
+		Preload("Products").
+		Joins("JOIN categories ON categories.id = subcategories.category_id").
+		Where("subcategories.slug = ? AND categories.slug = ?",
+			strings.ToLower(subcategorySlug),
+			strings.ToLower(categorySlug)).
+		First(&subcat).Error; err != nil {
+
+		http.NotFound(w, r)
+		return
+	}
+
+	// Загружаем шаблон
 	tmpl, err := template.ParseFiles("templates/products.html")
 	if err != nil {
 		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 		return
 	}
 
-	var cat models.Category
-	if err := database.DB.Where("LOWER(name) = ?", strings.ToLower(category)).First(&cat).Error; err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	products, err := productRepo.GetByCategory(cat.ID)
-	if err != nil {
-		http.Error(w, "Ошибка получения продуктов", http.StatusInternalServerError)
-		return
-	}
-
+	// Подготавливаем данные для шаблона
 	data := struct {
 		CategorySlug    string
 		SubcategorySlug string
 		Products        []models.Product
 	}{
-		CategorySlug:    category,
-		SubcategorySlug: "",
-		Products:        products,
+		CategorySlug:    categorySlug,
+		SubcategorySlug: subcategorySlug,
+		Products:        subcat.Products, // Используем загруженные продукты
 	}
 
-	err = tmpl.Execute(w, data)
-	if err != nil {
+	// Рендерим шаблон
+	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
 	}
 }
 
 // Страница конкретного продукта
 func handleProduct(w http.ResponseWriter, r *http.Request, category, subcategory, productSlug string) {
+
+	var product models.Product
+	if err := database.DB.Where("slug = ?", productSlug).First(&product).Error; err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Создаем структуру данных для шаблона
+	data := struct {
+		Name        string
+		Slug        string
+		Price       float64
+		ImagePath   string
+		Description string
+	}{
+		Name:        product.Name,
+		Slug:        productSlug,
+		Price:       product.Price,
+		ImagePath:   product.ImagePath,
+		Description: product.Description,
+	}
+
 	tmpl, err := template.ParseFiles("templates/product.html")
 	if err != nil {
 		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 		return
 	}
 
-	product, err := productRepo.GetBySlug(productSlug)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	err = tmpl.Execute(w, product)
+	err = tmpl.Execute(w, data)
 	if err != nil {
 		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
 	}

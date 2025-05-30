@@ -8,9 +8,9 @@
         {{range .Products}}
         <div class="product">
             {{if eq $.CategorySlug "sales"}}
-                <a href="/catalog/{{$.CategorySlug}}/{{.Name}}">{{.Name}}</a> - {{printf "%.2f" .Price}} ₽
+                <a href="/catalog/{{$.CategorySlug}}/{{.Slug}}">{{.Name}}</a> - {{printf "%.2f" .Price}} ₽
             {{else}}
-                <a href="/catalog/{{$.CategorySlug}}/{{$.SubcategorySlug}}/{{.Name}}">{{.Name}}</a> - {{printf "%.2f" .Price}} ₽
+                <a href="/catalog/{{$.CategorySlug}}/{{$.SubcategorySlug}}/{{.Slug}}">{{.Name}}</a> - {{printf "%.2f" .Price}} ₽
             {{end}}
         </div>
         {{end}}
