@@ -43,6 +43,7 @@ func (r *ProductRepository) GetProductsOnSale() ([]models.Product, error) {
 	return products, err
 }
 
+// Получить все продукты по категории
 func (r *ProductRepository) GetByCategory(categoryID uint) ([]models.Product, error) {
 	var products []models.Product
 	err := r.db.
@@ -53,6 +54,20 @@ func (r *ProductRepository) GetByCategory(categoryID uint) ([]models.Product, er
 		Find(&products).
 		Error
 	return products, err
+}
+
+// Получить все продукты по подкатегории
+func (r *ProductRepository) GetBySubcategory(subcategoryID uint) ([]models.Product, error) {
+	var products []models.Product
+	err := r.db.Where("subcategory_id = ?", subcategoryID).Find(&products).Error
+	return products, err
+}
+
+// Получить продукт по слагу
+func (r *ProductRepository) GetBySlug(slug string) (*models.Product, error) {
+	var product models.Product
+	err := r.db.Where("slug = ?", slug).First(&product).Error
+	return &product, err
 }
 
 // Update обновляет продукт с проверкой существования

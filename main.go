@@ -1,115 +1,36 @@
 package main
 
 import (
+	"cosmetics_catalog/database"
+	"cosmetics_catalog/models"
+	"cosmetics_catalog/repositories"
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 )
 
-func main() {
+var productRepo *repositories.ProductRepository
 
-	// Обработчик главной страницы (каталога)
+func main() {
+	// Подключение к базе данных
+	if err := database.Connect(); err != nil {
+		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+	}
+
+	// Посев тестовых данных
+	if err := database.SeedTestData(); err != nil {
+		log.Fatalf("Ошибка при посеве данных: %v", err)
+	}
+
+	// Инициализация репозитория продуктов
+	productRepo = repositories.NewProductRepository(database.DB)
+
+	// Настройка маршрутов
 	http.HandleFunc("/", handleCatalogRoutes)
 
-	//Обработчик перехода из каталога
-	//http.HandleFunc("/catalog/", handleCatalogSubcategory)
-
-	// Запускаем сервер
+	log.Println("Сервер запущен на http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
-}
-
-// Обработчик главной страницы
-func handleMainPage(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("templates/catalog.html")
-	if err != nil {
-		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, catalog)
-	if err != nil {
-		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
-	}
-}
-
-// Обработчик подкатегорий каталога
-func handleCatalogSubcategory(w http.ResponseWriter, r *http.Request, slug string) {
-
-	var current Category
-	for i := range catalog {
-		if catalog[i].Slug == slug {
-			current = catalog[i]
-			break
-		}
-	}
-
-	if current.Name == "" {
-		http.NotFound(w, r)
-		return
-	}
-
-	tmpl, err := template.ParseFiles("templates/subcategory.html")
-	if err != nil {
-		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, current)
-	if err != nil {
-		http.Error(w, "Ошибка рендеринга шаблона", http.StatusInternalServerError)
-	}
-}
-
-// Обработчик продуктов подкатегории
-func handleCategoryProducts(w http.ResponseWriter, r *http.Request, category string, subcategory string) {
-
-	tmpl, err := template.ParseFiles("templates/products.html")
-	if err != nil {
-		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
-		return
-	}
-
-	data := struct {
-		CategorySlug    string
-		SubcategorySlug string
-		Products        []Product
-	}{
-		CategorySlug:    category,
-		SubcategorySlug: subcategory,
-		Products:        products,
-	}
-
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
-	}
-
-}
-
-// Обработчик продукта
-func handleProduct(w http.ResponseWriter, r *http.Request, category string, subcategory string, product string) {
-
-	var foundProduct *Product
-	for _, p := range products {
-		if p.Name == product {
-			foundProduct = &p
-			break
-		}
-	}
-
-	tmpl, err := template.ParseFiles("templates/product.html")
-
-	if err != nil {
-		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, foundProduct)
-
-	if err != nil {
-		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
-	}
-
 }
 
 func handleCatalogRoutes(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +41,7 @@ func handleCatalogRoutes(w http.ResponseWriter, r *http.Request) {
 	case len(parts) == 0 || parts[0] == "":
 		handleMainPage(w, r)
 	case len(parts) == 1 && parts[0] != "" && parts[0] != "sales": // /
-		handleCatalogSubcategory(w, r, parts[0])
+		handleCatalogSubcategory(w, r, parts[0], "")
 	case len(parts) == 1 && parts[0] != "" && parts[0] == "sales": // /catalog/sales/
 		handleCategoryProducts(w, r, parts[0], "")
 	case len(parts) == 2 && parts[0] != "sales": // /catalog/{category}
@@ -132,5 +53,123 @@ func handleCatalogRoutes(w http.ResponseWriter, r *http.Request) {
 
 	default:
 		http.NotFound(w, r)
+	}
+}
+
+// Главная страница с категориями
+func handleMainPage(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFiles("templates/catalog.html")
+	if err != nil {
+		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		return
+	}
+
+	var categories []models.Category
+	if err := database.DB.Find(&categories).Error; err != nil {
+		http.Error(w, "Ошибка получения категорий", http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, categories)
+	if err != nil {
+		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
+	}
+}
+
+// Страница подкатегории с продуктами
+func handleCatalogSubcategory(w http.ResponseWriter, r *http.Request, category, subcategory string) {
+	tmpl, err := template.ParseFiles("templates/products.html")
+	if err != nil {
+		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		return
+	}
+
+	var cat models.Category
+	if err := database.DB.Where("LOWER(slug) = ?", strings.ToLower(category)).First(&cat).Error; err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	var subcat models.Subcategory
+	if err := database.DB.Where("LOWER(name) = ? AND category_id = ?", strings.ToLower(subcategory), cat.ID).First(&subcat).Error; err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	products, err := productRepo.GetBySubcategory(subcat.ID)
+	if err != nil {
+		http.Error(w, "Ошибка получения продуктов", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		CategorySlug    string
+		SubcategorySlug string
+		Products        []models.Product
+	}{
+		CategorySlug:    category,
+		SubcategorySlug: subcategory,
+		Products:        products,
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
+	}
+}
+
+// Страница всех продуктов категории (без подкатегории)
+func handleCategoryProducts(w http.ResponseWriter, r *http.Request, category, _ string) {
+	tmpl, err := template.ParseFiles("templates/products.html")
+	if err != nil {
+		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		return
+	}
+
+	var cat models.Category
+	if err := database.DB.Where("LOWER(name) = ?", strings.ToLower(category)).First(&cat).Error; err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	products, err := productRepo.GetByCategory(cat.ID)
+	if err != nil {
+		http.Error(w, "Ошибка получения продуктов", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		CategorySlug    string
+		SubcategorySlug string
+		Products        []models.Product
+	}{
+		CategorySlug:    category,
+		SubcategorySlug: "",
+		Products:        products,
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
+	}
+}
+
+// Страница конкретного продукта
+func handleProduct(w http.ResponseWriter, r *http.Request, category, subcategory, productSlug string) {
+	tmpl, err := template.ParseFiles("templates/product.html")
+	if err != nil {
+		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
+		return
+	}
+
+	product, err := productRepo.GetBySlug(productSlug)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	err = tmpl.Execute(w, product)
+	if err != nil {
+		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
 	}
 }
