@@ -180,10 +180,11 @@ func handleProduct(w http.ResponseWriter, r *http.Request, category, subcategory
 	if err != nil {
 		http.Error(w, "Ошибка загрузки шаблона", http.StatusInternalServerError)
 		return
+
 	}
 
-	err = tmpl.Execute(w, data)
-	if err != nil {
+	// Рендерим шаблон
+	if err := tmpl.Execute(w, data); err != nil {
 		http.Error(w, "Ошибка рендеринга", http.StatusInternalServerError)
 	}
 }
