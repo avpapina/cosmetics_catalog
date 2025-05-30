@@ -10,7 +10,7 @@
         {{ if eq .Slug "sales" }}
             <!-- Режим отображения продуктов для акций -->
             <div class="product-list">
-                {{ range .Children }}
+                {{ range .Subcategories }}
                 <a href="/catalog/{{ $.Slug }}" class="subcategory-link">
                     <div class="subcategory-card">
                         <h2>{{ .Name }}</h2>
@@ -21,7 +21,7 @@
         {{ else }}
             <!-- Стандартный режим отображения подкатегорий -->
             <div class="subcategory-list">
-            {{ range .Children }}
+            {{ range .Subcategories }}
             <a href="/catalog/{{ $.Slug }}/{{ .Slug }}" class="subcategory-link">
                 <div class="subcategory-card">
                     <h2>{{ .Name }}</h2>
