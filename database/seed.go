@@ -45,6 +45,7 @@ func SeedTestData() error {
 	}
 
 	// Создание тестовых продуктов
+	// Создание тестовых продуктов
 	products := []models.Product{
 		{
 			Name:          "Тональный крем",
@@ -54,6 +55,46 @@ func SeedTestData() error {
 			Price:         1299.99,
 			ImagePath:     "images/creme.jpg",
 			Description:   "Легкий тональный крем с натуральным покрытием",
+		},
+		{
+			Name:          "Увлажняющий крем",
+			Slug:          "uvlazhnyayushchii-krem",
+			BrandID:       1,
+			SubcategoryID: 1, // Лицо
+			Price:         1499.00,
+			ImagePath:     "images/moisturizer.jpg",
+			Description:   "Интенсивное увлажнение на 24 часа",
+			IsOnSale:      true,
+			SalePrice:     1199.00,
+		},
+		{
+			Name:          "Очищающая пенка",
+			Slug:          "ochishchayushchaya-penka",
+			BrandID:       3,
+			SubcategoryID: 1, // Лицо
+			Price:         799.50,
+			ImagePath:     "images/cleanser.jpg",
+			Description:   "Мягкое очищение без стягивания",
+		},
+		{
+			Name:          "Сыворотка с гиалуроновой кислотой",
+			Slug:          "syvorotka-s-gialuronovoi-kislotoy",
+			BrandID:       2,
+			SubcategoryID: 1, // Лицо
+			Price:         2499.00,
+			ImagePath:     "images/serum.jpg",
+			Description:   "Глубокое увлажнение и разглаживание морщин",
+		},
+		{
+			Name:          "BB-крем",
+			Slug:          "bb-krem",
+			BrandID:       4,
+			SubcategoryID: 1, // Лицо
+			Price:         1599.00,
+			ImagePath:     "images/bb-cream.jpg",
+			Description:   "Многофункциональный уход и макияж в одном",
+			IsOnSale:      true,
+			SalePrice:     1299.00,
 		},
 		{
 			Name:          "Тушь для ресниц",

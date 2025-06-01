@@ -7,7 +7,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 var productRepo *repositories.ProductRepository
@@ -114,18 +117,87 @@ func handleCatalogSubcategory(w http.ResponseWriter, r *http.Request, slug strin
 
 // Страница всех продуктов подкатегории
 func handleCategoryProducts(w http.ResponseWriter, r *http.Request, categorySlug, subcategorySlug string) {
-	// Получаем подкатегорию с продуктами
-	var subcat models.Subcategory
-	if err := database.DB.
-		Preload("Products").
-		Joins("JOIN categories ON categories.id = subcategories.category_id").
-		Where("subcategories.slug = ? AND categories.slug = ?",
-			strings.ToLower(subcategorySlug),
-			strings.ToLower(categorySlug)).
-		First(&subcat).Error; err != nil {
 
-		http.NotFound(w, r)
-		return
+	// Получаем параметры фильтрации
+	query := r.URL.Query()
+	filter := query.Get("filter")
+	if filter == "" {
+		filter = "no" // Значение по умолчанию
+	}
+
+	// Обработка ценового диапазона
+	var minPrice, maxPrice float64
+	if filter == "range" {
+		minPrice, _ = strconv.ParseFloat(query.Get("min_price"), 64)
+		maxPrice, _ = strconv.ParseFloat(query.Get("max_price"), 64)
+	}
+
+	// Отображение продуктов без фильтра
+	var subcat models.Subcategory
+	if filter == "no" {
+		if err := database.DB.
+			Preload("Products").
+			Joins("JOIN categories ON categories.id = subcategories.category_id").
+			Where("subcategories.slug = ? AND categories.slug = ?",
+				strings.ToLower(subcategorySlug),
+				strings.ToLower(categorySlug)).
+			First(&subcat).Error; err != nil {
+
+			http.NotFound(w, r)
+			return
+		}
+	}
+
+	// Сортировка продуктов по возрастанию цены
+	if filter == "high" {
+		if err := database.DB.
+			Preload("Products", func(db *gorm.DB) *gorm.DB {
+				return db.Order("products.price ASC")
+			}).
+			Joins("JOIN categories ON categories.id = subcategories.category_id").
+			Where("subcategories.slug = ? AND categories.slug = ?",
+				strings.ToLower(subcategorySlug),
+				strings.ToLower(categorySlug)).
+			First(&subcat).Error; err != nil {
+
+			http.NotFound(w, r)
+			return
+		}
+	}
+
+	// Сортировка продуктов по убыванию цены
+	if filter == "low" {
+		if err := database.DB.
+			Preload("Products", func(db *gorm.DB) *gorm.DB {
+				return db.Order("products.price DESC")
+			}).
+			Joins("JOIN categories ON categories.id = subcategories.category_id").
+			Where("subcategories.slug = ? AND categories.slug = ?",
+				strings.ToLower(subcategorySlug),
+				strings.ToLower(categorySlug)).
+			First(&subcat).Error; err != nil {
+
+			http.NotFound(w, r)
+			return
+		}
+	}
+
+	// Отображение продуктов в промежутке от minPrice до maxPrice
+	if filter == "range" {
+		if err := database.DB.
+			Preload("Products", func(db *gorm.DB) *gorm.DB {
+				return db.
+					Where("products.price BETWEEN ? AND ?", minPrice, maxPrice)
+			}).
+			Joins("JOIN categories ON categories.id = subcategories.category_id").
+			Where("subcategories.slug = ? AND categories.slug = ?",
+				strings.ToLower(subcategorySlug),
+				strings.ToLower(categorySlug)).
+			First(&subcat).Error; err != nil {
+
+			http.NotFound(w, r)
+			return
+		}
 	}
 
 	// Загружаем шаблон
@@ -136,14 +208,21 @@ func handleCategoryProducts(w http.ResponseWriter, r *http.Request, categorySlug
 	}
 
 	// Подготавливаем данные для шаблона
+	// Подготавливаем данные для шаблона
 	data := struct {
+		Filter          string
 		CategorySlug    string
 		SubcategorySlug string
+		MinPrice        float64 // Добавляем
+		MaxPrice        float64 // Добавляем
 		Products        []models.Product
 	}{
+		Filter:          filter,
 		CategorySlug:    categorySlug,
 		SubcategorySlug: subcategorySlug,
-		Products:        subcat.Products, // Используем загруженные продукты
+		MinPrice:        minPrice, // Добавляем
+		MaxPrice:        maxPrice, // Добавляем
+		Products:        subcat.Products,
 	}
 
 	// Рендерим шаблон

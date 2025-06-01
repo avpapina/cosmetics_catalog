@@ -1,18 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Products</title>
+    <title>{{.CategorySlug}} / {{.SubcategorySlug}} | Каталог</title>
 </head>
 <body>
-    <div class="products-list">
+    <h1>{{.CategorySlug}} / {{.SubcategorySlug}}</h1>
+    
+    <div class="filters">
+        <!-- Кнопки фильтрации -->
+        <a href="/catalog/{{.CategorySlug}}/{{.SubcategorySlug}}">
+            <button class="filter-btn {{if eq .Filter "no"}}active{{end}}">Все товары</button>
+        </a>
+        
+        <a href="/catalog/{{.CategorySlug}}/{{.SubcategorySlug}}?filter=high">
+            <button class="filter-btn {{if eq .Filter "high"}}active{{end}}">По возрастанию цены</button>
+        </a>
+        
+        <a href="/catalog/{{.CategorySlug}}/{{.SubcategorySlug}}?filter=low">
+            <button class="filter-btn {{if eq .Filter "low"}}active{{end}}">По убыванию цены</button>
+        </a>
+        
+        <!-- Форма для фильтра по цене -->
+        <form method="GET" action="/catalog/{{.CategorySlug}}/{{.SubcategorySlug}}" style="display: inline;">
+            <input type="hidden" name="filter" value="range">
+            <div class="price-inputs">
+                <input type="number" name="min_price" placeholder="От" step="0.01" 
+                       value="{{if eq .Filter "range"}}{{.MinPrice}}{{end}}">
+                <input type="number" name="max_price" placeholder="До" step="0.01"
+                       value="{{if eq .Filter "range"}}{{.MaxPrice}}{{end}}">
+                <button type="submit" class="filter-btn {{if eq .Filter "range"}}active{{end}}">Фильтр по цене</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Список продуктов -->
+    <div class="products-grid">
         {{range .Products}}
-        <div class="product">
-            {{if eq $.CategorySlug "sales"}}
-                <a href="/catalog/{{$.CategorySlug}}/{{.Slug}}">{{.Name}}</a> - {{printf "%.2f" .Price}} ₽
-            {{else}}
-                <a href="/catalog/{{$.CategorySlug}}/{{$.SubcategorySlug}}/{{.Slug}}">{{.Name}}</a> - {{printf "%.2f" .Price}} ₽
-            {{end}}
+        <div class="product-card">
+            <div class="product-name">{{.Name}}</div>
+            <div class="product-price">{{printf "%.2f" .Price}} ₽</div>
+            <a href="/catalog/{{$.CategorySlug}}/{{$.SubcategorySlug}}/{{.Slug}}">Подробнее</a>
         </div>
+        {{else}}
+        <p>Товары не найдены</p>
         {{end}}
     </div>
 </body>
