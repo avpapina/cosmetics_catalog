@@ -214,7 +214,7 @@ func SeedTestData() error {
 			BrandID:       4,
 			SubcategoryID: makeupEyes.ID,
 			Price:         2900.00,
-			ImagePath:     "images/dior/diorshow.jpg",
+			ImagePath:     "/photos/tush.jpg",
 			Description:   "Культовая тушь для ресниц",
 			IsOnSale:      true,
 			SalePrice:     2500.00,

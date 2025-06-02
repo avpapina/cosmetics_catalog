@@ -32,6 +32,9 @@ func main() {
 	// Настройка маршрутов
 	http.HandleFunc("/", handleCatalogRoutes)
 
+	// Раздача статических файлов из папки photos
+	http.Handle("/photos/", http.StripPrefix("/photos/", http.FileServer(http.Dir("./photos"))))
+
 	log.Println("Сервер запущен на http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
