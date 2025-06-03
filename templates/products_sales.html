@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{.CategorySlug}} / {{.SubcategorySlug}} | Каталог</title>
+    <title>Товары со скидкой | Каталог</title>
 </head>
 <body>
-    <h1>{{.CategorySlug}} / {{.SubcategorySlug}}</h1>
+    <h1>Товары со скидкой</h1>
     
     <div class="filters">
         <!-- Кнопки фильтрации -->
-        <a href="/catalog/{{.CategorySlug}}/{{.SubcategorySlug}}">
+        <a href="/catalog/sales">
             <button class="filter-btn {{if eq .Filter "no"}}active{{end}}">Все товары</button>
         </a>
         
-        <a href="/catalog/{{.CategorySlug}}/{{.SubcategorySlug}}?filter=high">
+        <a href="/catalog/sales?filter=high">
             <button class="filter-btn {{if eq .Filter "high"}}active{{end}}">По возрастанию цены</button>
         </a>
         
-        <a href="/catalog/{{.CategorySlug}}/{{.SubcategorySlug}}?filter=low">
+        <a href="/catalog/sales?filter=low">
             <button class="filter-btn {{if eq .Filter "low"}}active{{end}}">По убыванию цены</button>
         </a>
         
         <!-- Форма для фильтра по цене -->
-        <form method="GET" action="/catalog/{{.CategorySlug}}/{{.SubcategorySlug}}" style="display: inline;">
+        <form method="GET" action="/catalog/sales" style="display: inline;">
             <input type="hidden" name="filter" value="range">
             <div class="price-inputs">
                 <input type="number" name="min_price" placeholder="От" step="0.01" 
@@ -50,10 +50,10 @@
                     {{printf "%.2f" .Price}} ₽
                 {{end}}
             </div>
-            <a href="/catalog/{{$.CategorySlug}}/{{$.SubcategorySlug}}/{{.Slug}}">Подробнее</a>
+            <a href="/catalog/sales/{{.Slug}}">Подробнее</a>
         </div>
         {{else}}
-        <p>Товары не найдены</p>
+        <p>Нет товаров со скидкой</p>
         {{end}}
     </div>
 </body>

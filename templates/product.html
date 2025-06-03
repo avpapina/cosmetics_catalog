@@ -5,7 +5,20 @@
 </head>
 <body>
     <h1>{{.Name}}</h1>
-    <p>Price: {{.Price}}</p>
+    
+    <div class="price">
+        {{if .IsOnSale}}
+            <span class="original-price" style="text-decoration: line-through; color: #999;">
+                {{printf "%.2f" .Price}} ₽
+            </span>
+            <span class="sale-price" style="color: #e53935; font-weight: bold;">
+                {{printf "%.2f" .SalePrice}} ₽
+            </span>
+        {{else}}
+            {{printf "%.2f" .Price}} ₽
+        {{end}}
+    </div>
+
     <p>Описание: {{.Description}}</p>
     <img src="{{.ImagePath}}" alt="{{.Name}}" style="max-width: 500px;">
 </body>

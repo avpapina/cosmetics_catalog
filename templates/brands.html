@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Каталог</title>
+</head>
+<body>
+    <h1>Бренды</h1>
+    <div class="categories-list">
+        {{ range . }}
+        <a href="/catalog/brands/{{ .Slug }}" class="category-card">
+            <div class="category-item">
+                <h2>{{ .Name }}</h2>
+            </div>
+        </a>
+        {{ end }}
+    </div>
+</body>
+</html>

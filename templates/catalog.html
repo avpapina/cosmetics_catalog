@@ -6,6 +6,21 @@
 <body>
     <h1>Категории</h1>
     <div class="categories-list">
+        <!-- Специальная карточка для акций -->
+        <a href="/catalog/sales" class="category-card">
+            <div class="category-item">
+                <h2>Акции</h2>
+            </div>
+        </a>
+
+        <!-- Специальная карточка для брендов -->
+        <a href="/catalog/brands" class="category-card">
+            <div class="category-item">
+                <h2>Бренды</h2>
+            </div>
+        </a>
+
+        <!-- Основные категории из данных -->
         {{ range . }}
         <a href="/catalog/{{ .Slug }}" class="category-card">
             <div class="category-item">
